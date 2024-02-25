@@ -1,6 +1,8 @@
 #include "mbed.h"
 #include "rtos.h"
 #include "uLCD_4DGL.h"     //Updated LCD Library
+#include "wave_player.h"
+#include "SDFileSystem.h"
 
 
 DigitalOut led1(LED1);
@@ -30,9 +32,18 @@ void led2_thread() {
 void thread1()
 {
     while(true) {       // thread loop
+        for (int i = 0; i < 15; i++)
+        {
+            lcd_mutex.lock();
+            //uLCD.printf("Thread1 count: %d", 10000);
+            uLCD.filled_circle(32, 32, i, BLUE);
+            lcd_mutex.unlock();
+            Thread::wait(100);
+        }
         lcd_mutex.lock();
-        uLCD.printf("Thread1 count: %d", 10000);
+        uLCD.filled_circle(32, 32, 15, BLACK);
         lcd_mutex.unlock();
+
         Thread::wait(1000);
     }
 }
@@ -42,11 +53,19 @@ void thread1()
 void thread2()
 {
     while(true) {       // thread loop
+        for (int i = 0; i < 15; i++)
+        {
+            lcd_mutex.lock();
+            //uLCD.printf("Thread1 count: %d", 10000);
+            uLCD.filled_circle(96, 96, i, RED);
+            lcd_mutex.unlock();
+            Thread::wait(100);
+        }
         lcd_mutex.lock();
-        //LCD.set_font((unsigned char*) Arial_9);
-        uLCD.printf("Thread 2 count");
+        uLCD.filled_circle(96, 96, 15, BLACK);
         lcd_mutex.unlock();
-        Thread::wait(500); // wait 0.5s
+
+        Thread::wait(1000);
     }
 }
 
@@ -55,10 +74,10 @@ void thread2()
 void thread3()
 {
     while(true) {         // thread loop
-        RGBLED_r = 0.5 + (rand() % 11)/20.0;
+        RGBLED_r = 2 *(0.5 + (rand() % 11)/20.0);
         RGBLED_g = 0.5 + (rand() % 11)/20.0;
         RGBLED_b = 0.5 + (rand() % 11)/20.0;
-        Thread::wait(1667);    // wait 1.5s
+        Thread::wait(500);    // wait 1.5s
     }
 }
 /*
