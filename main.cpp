@@ -11,8 +11,11 @@ Thread thread;
 Thread t1;
 Thread t2;
 Thread t3;
-//Thread t4;
+Thread t4;
+
 uLCD_4DGL uLCD(p13,p14,p15); //Tx, Rx, Rst
+
+SDFileSystem sd(p5, p6, p7, p8, "sd"); //SD card
 
 // mutex to make the lcd lib thread safe
 Mutex lcd_mutex;
@@ -21,6 +24,8 @@ PwmOut RGBLED_r(p23);
 PwmOut RGBLED_g(p24);
 PwmOut RGBLED_b(p25);
 
+AnalogOut DACout(p18);
+wave_player waver(&DACout);
 
 void led2_thread() {
     while (true) {
@@ -80,61 +85,39 @@ void thread3()
         Thread::wait(500);    // wait 1.5s
     }
 }
-/*
-// Thread 6
-// Speaker
-void thread4()
-{
-    while(true) {         // thread loop
-        Speaker.period(1.0/800.0);
-        Speaker = 0.01;
-        Thread::wait(1000);    // wait 1.0s
-        Speaker.period(1.0/969.0);
-        Speaker = 0.01;
-        Thread::wait(1000);    // wait 1.0s
+
+void SD_audio_thread() {
+    while(true) {
+        FILE *wave_file;
+        // printf("\r\n\nHello, wave world!\n\r");
+        Thread::wait(1000);
+        wave_file=fopen("/sd/burp_x_8k.wav","r");
+        if(wave_file==NULL) printf("file open error!\n\n\r");
+        else printf("file open!\n\n\r");
+
+        printf("file about to play.\n\n\r");
+        waver.play(wave_file);
+        printf("file has been played.\n\n\r");
+
+        fclose(wave_file);
+
+        /*lcd_mutex.lock();
+        printf("lcd MUTEX LOCKED.\n\n\r");
+        threadCount++;
+        lcd_mutex.unlock();
+        printf("lcd MUTEX UNLOCKED.\n\n\r");*/
+        Thread::wait(1000);
     }
 }
-*/
-
  
 int main() {
     thread.start(led2_thread);
-/*
-    // basic printf demo = 16 by 18 characters on screen
-    uLCD.printf("\nHello uLCD World\n"); //Default Green on black text
-    uLCD.printf("\n  Starting Demo...");
-    uLCD.text_width(4); //4X size text
-    uLCD.text_height(4);
-    uLCD.color(RED);
-    for (int i=10; i>=0; --i) {
-        uLCD.locate(1,2);
-        uLCD.printf("%2D",i);
-        wait(.5);
-    }
-    uLCD.cls();
-    uLCD.printf("Change baudrate......");
-    uLCD.baudrate(3000000); //jack up baud rate to max for fast display
-    //if demo hangs here - try lower baud rates
-    //
-    // printf text only full screen mode demo
-    uLCD.background_color(BLUE);
-    uLCD.cls();
-    uLCD.locate(0,0);
-    uLCD.color(WHITE);
-    uLCD.textbackground_color(BLUE);
-    uLCD.set_font(FONT_7X8);
-    uLCD.text_mode(OPAQUE);
-    int i=0;
-    while(i<64) {
-        if(i%16==0) uLCD.cls();
-        uLCD.printf("TxtLine %2D Page %D\n",i%16,i/16 );
-        i++; //16 lines with 18 charaters per line
-    }
-*/
+
     t1.start(thread1);
     t2.start(thread2);
     t3.start(thread3);
-    //t4.start(thread4);
+    t4.start(SD_audio_thread);
+
     wait(0.5);
     wait(2);
     while (true) {
