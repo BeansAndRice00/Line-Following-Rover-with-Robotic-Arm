@@ -12,6 +12,7 @@ Thread t1;
 Thread t2;
 Thread t3;
 Thread t4;
+Thread t5;
 
 uLCD_4DGL uLCD(p13,p14,p15); //Tx, Rx, Rst
 
@@ -34,7 +35,7 @@ void led2_thread() {
     }
 }
 
-void thread1()
+void thread1() // lcd1
 {
     while(true) {       // thread loop
         for (int i = 0; i < 15; i++)
@@ -55,7 +56,7 @@ void thread1()
 
 // Thread 2
 // print counter into third line and wait for 0,5s
-void thread2()
+void thread2() // lcd2
 {
     while(true) {       // thread loop
         for (int i = 0; i < 15; i++)
@@ -101,22 +102,74 @@ void SD_audio_thread() {
 
         fclose(wave_file);
 
-        /*lcd_mutex.lock();
-        printf("lcd MUTEX LOCKED.\n\n\r");
-        threadCount++;
-        lcd_mutex.unlock();
-        printf("lcd MUTEX UNLOCKED.\n\n\r");*/
         Thread::wait(1000);
     }
 }
  
-int main() {
-    thread.start(led2_thread);
+RawSerial pc(USBTX, USBRX);  // Initialize a serial port for USB communication
+RawSerial bluemod(p28, p27);     // Initialize another serial port using pins p28 and p27
 
-    t1.start(thread1);
-    t2.start(thread2);
-    t3.start(thread3);
+// Function to handle receiving data from the device serial port
+void bluetooth_thread()
+{
+    char bred=0;
+    char bgreen=0;
+    char bblue=0;
+    RGBLED_r = RGBLED_g = RGBLED_b = 0;
+    printf("bluetooth starting\n\n\r");
+    while(1) {
+            printf("After while, before lock\n\n\r");
+        //lcd_mutex.lock();
+                    printf("After lock\n\n\r");
+
+        if (bluemod.getc()=='!') {
+                                printf("First getc\n\n\r");
+
+            if (bluemod.getc()=='C') { //color data packet
+                                            printf("Second getc\n\n\r");
+
+                bred = bluemod.getc(); // RGB color values
+                                printf("Third getc\n\n\r");
+
+                bgreen = bluemod.getc();
+                                printf("Fourth getc\n\n\r");
+
+                bblue = bluemod.getc();
+                                printf("Fifth getc\n\n\r");
+
+                if (bluemod.getc()==char(~('!' + 'C' + bred + bgreen + bblue))) { //checksum OK?
+                    RGBLED_r = bred/255.0; //send new color to RGB LED PWM outputs
+                    RGBLED_g = bgreen/255.0;
+                    RGBLED_b = bblue/255.0;
+                }
+            }
+        }
+        printf("bluetooth ending\n\n\r");
+        //lcd_mutex.unlock();
+    }
+}
+
+void blueTooth_init()
+{
+    pc.baud(9600);  // Set the baud rate for the PC serial port
+    bluemod.baud(9600); // Set the baud rate for the device serial port
+
+    // Attach the pc_recv function to handle interrupts on the PC serial port
+    //pc.attach(&pc_recv, Serial::RxIrq);
+    // Attach the dev_recv function to handle interrupts on the device serial port
+    //bluemod.attach(&dev_recv, Serial::RxIrq);
+}
+
+int main() {
+
+    blueTooth_init();
+
+    // thread.start(led2_thread);
+    t1.start(thread1); // lcd1
+    t2.start(thread2); // lcd2
+    // t3.start(thread3);
     t4.start(SD_audio_thread);
+    t5.start(bluetooth_thread);
 
     wait(0.5);
     wait(2);
