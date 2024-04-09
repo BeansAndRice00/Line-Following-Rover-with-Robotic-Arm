@@ -9,3 +9,7 @@ mbed
 wave_player
 SDFileSystem_OldbutworkswithRTOS
 SDFileSystem
+.mbed
+compile_commands.json
+.clangd
+.cache
