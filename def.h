@@ -9,6 +9,9 @@
 #define ARM_TX  p9
 #define ARM_RX  p10
 
+#define ROVER_TX  p13
+#define ROVER_RX  p14
+
 enum ArmCommand {
     MOTOR1_FORWARD,     // 000
     MOTOR1_REVERSE,     // 001
@@ -36,6 +39,7 @@ AnalogOut DACout(p18);
 
 RawSerial pc(USBTX, USBRX);  // Initialize a serial port for USB communication
 RawSerial arm(ARM_TX, ARM_RX);  // Initialize a serial port for USB communication
+RawSerial rover(ROVER_TX, ROVER_RX);  // Initialize a serial port for USB communication
 RawSerial bluemod(BLUE_TX, BLUE_RX);     // Initialize another serial port using pins p28 and p27
 
 volatile char serialBuffer;

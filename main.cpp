@@ -47,11 +47,21 @@ void blueTooth_init()
 void serial_rx()
 {
     char temp = 0;
-    led1 = !led1;
-    while(arm.readable()) {
-        temp = arm.getc();
-        if (temp=='1') led2 = MOTOR1_FORWARD;
-        if (temp=='0') led2 = 0;
+    //led1 = !led1;
+    while(1)
+    {
+        while(arm.readable()) {
+            pc.printf("Rx-ing\n");
+            temp = arm.getc();
+            if (temp=='1') led2 = 1;
+            if (temp=='0') led2 = 0;
+            else 
+            {
+                pc.printf("%c\n", temp);
+            }
+            
+        }
+        Thread::wait(50);
     }
 }
 
@@ -59,9 +69,15 @@ void serial_rx()
 void serial_tx()
 {
     char serialBuffer = 0;
-    led1 = !led1;
-    while(arm.writeable() && serialBuffer != serialBuffer_old) {
-        arm.putc(serialBuffer);
+    //led1 = !led1;
+    while(1)
+    {
+        while(rover.writeable() && serialBuffer != serialBuffer_old) {
+            pc.printf("Tx-ing\n");
+            rover.putc(serialBuffer);
+            serialBuffer_old = serialBuffer;
+        }
+        Thread::wait(50);
     }
 }
 
@@ -69,24 +85,32 @@ void serial_init()
 {
     arm.baud(9600);
     arm.attach(&serial_rx, Serial::RxIrq);
+
+    rover.baud(9600);
+
     serialBuffer        = RESERVED;
     serialBuffer_old    = RESERVED;
+
+    pc.baud(9600);
+    //pc.attach(&serial_rx, Serial::RxIrq);
 }
 
 
 int main() {
-
+    pc.printf("Start\n");
     blueTooth_init();
     serial_init();
 
     t1.start(serial_tx);
-    
-    Thread::wait(1000);
-    serialBuffer = MOTOR1_FORWARD;
+    t2.start(serial_rx);
 
+    Thread::wait(1000);
+    serialBuffer = char(MOTOR1_REVERSE);
+    Thread::wait(1000);
+    serialBuffer = char(MOTOR3_REVERSE);
     Thread::wait(2000);
     while (true) {
-        led1 = !led1;
+        //led1 = !led1;
         Thread::wait(500);
     }
 }
