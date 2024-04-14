@@ -1,63 +1,155 @@
 #include "def.h"
 
-
-void thread1() // lcd1
+float util_speedConversion(enum RoverCommand commanded)
 {
-    while(true) {       // thread loop
+    switch (commanded) {
+        case ROVER_MOTOR1_FORWARD: //number button 1
+            return 0.5;
+            break;
+        case ROVER_MOTOR1_REVERSE: //number button 1
+            return -0.5;
+            break;
+        case ROVER_MOTOR2_FORWARD: //number button 1
+            return 0.5;
+            break;
+        case ROVER_MOTOR2_REVERSE: //number button 1
+            return -0.5;
+            break;
+        default:
+            return 0.0;
+            break;
+    }
+
+}
+
+void LeftMotor() 
+{
+    while(true) {       
+
+        pc.printf("Left Motor Running\n");
+        //if ()
+        sample      = util_speedConversion(commanded); 
+        position    = sample;
+        m.speed(position); 
+        //wait(0.02);
+        Thread::wait(1000);
+
+    }
+}
+
+
+void RightMotor() 
+{
+    while(true) {       
 
         Thread::wait(1000);
     }
 }
 
-// Thread 2
-// print counter into third line and wait for 0,5s
-void thread2() // lcd2
-{
-    while(true) {       // thread loop
-
-        Thread::wait(1000);
-    }
-}
-
-// Function to handle receiving data from the device serial port
+// From: https://os.mbed.com/users/4180_1/notebook/adafruit-bluefruit-le-uart-friend---bluetooth-low-/
+//Button 1 -> Standby
+//Button 2 -> Manual
+    // Up (5), Down (6), Left (7), Right (8)
+    // On hit, will move motor. On release, will stop motor
+    // Up is pos, down negative. 
+    // Left moves left motor reverse, right forward  
+//Button 3 -> Path_Find
 void bluetooth_thread()
 {
-    char bred=0;
-    char bgreen=0;
-    char bblue=0;
-    //RGBLED_r = RGBLED_g = RGBLED_b = 0;
-    printf("bluetooth starting\n\n\r");
+char bnum=0;
+    char bhit=0;
     while(1) {
-        if (bluemod.getc()=='!') {
-            if (bluemod.getc()=='C') { //color data packet
-                if (bluemod.getc()==char(~('!' + 'C' + bred + bgreen + bblue))) { //checksum OK?
+        if (blue.getc()=='!') {
+            if (blue.getc()=='B') { //button data packet
+                bnum = blue.getc(); //button number
+                bhit = blue.getc(); //1=hit, 0=release
+                if (blue.getc()==char(~('!' + 'B' + bnum + bhit))) { //checksum OK?
+                    switch (bnum) {
+                        case '1': //number button 1
+                            if (bhit=='1') {
+                                //add hit code here
+                            } else {
+                                //add release code here
+                            }
+                            break;
+                        case '2': //number button 2
+                            if (bhit=='1') {
+                                //add hit code here
+                            } else {
+                                //add release code here
+                            }
+                            break;
+                        case '3': //number button 3
+                            if (bhit=='1') {
+                                //add hit code here
+                            } else {
+                                //add release code here
+                            }
+                            break;
+                        case '4': //number button 4
+                            if (bhit=='1') {
+                                //add hit code here
+                            } else {
+                                //add release code here
+                            }
+                            break;
+                        case '5': //button 5 up arrow
+                            if (bhit=='1') {
+                                //add hit code here
+                            } else {
+                                //add release code here
+                            }
+                            break;
+                        case '6': //button 6 down arrow
+                            if (bhit=='1') {
+                                //add hit code here
+                            } else {
+                                //add release code here
+                            }
+                            break;
+                        case '7': //button 7 left arrow
+                            if (bhit=='1') {
+                                //add hit code here
+                            } else {
+                                //add release code here
+                            }
+                            break;
+                        case '8': //button 8 right arrow
+                            if (bhit=='1') {
+                                //add hit code here
+                            } else {
+                                //add release code here
+                            }
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
         }
-        printf("bluetooth ending\n\n\r");
     }
 }
 
 void blueTooth_init()
 {
-    bluemod.baud(9600); // Set the baud rate for the device serial port
+    blue.baud(9600); // Set the baud rate for the device serial port
 }
 
 //From Lab 4
 void serial_rx()
 {
     char temp = 0;
-    //led1 = !led1;
     while(1)
     {
-        while(arm.readable()) {
+        while(rover.readable()) {
             pc.printf("Rx-ing\n");
-            temp = arm.getc();
+            temp = rover.getc();
             if (temp=='1') led2 = 1;
-            if (temp=='0') led2 = 0;
+            if (temp=='0') led3 = 1;
             else 
             {
                 pc.printf("%c\n", temp);
+                led1 = 1;
             }
             
         }
@@ -87,9 +179,10 @@ void serial_init()
     arm.attach(&serial_rx, Serial::RxIrq);
 
     rover.baud(9600);
+    rover.attach(&serial_rx, Serial::RxIrq);
 
-    serialBuffer        = RESERVED;
-    serialBuffer_old    = RESERVED;
+    serialBuffer        = ARM_RESERVED;
+    serialBuffer_old    = ARM_RESERVED;
 
     pc.baud(9600);
     //pc.attach(&serial_rx, Serial::RxIrq);
@@ -102,15 +195,41 @@ int main() {
     serial_init();
 
     t1.start(serial_tx);
-    t2.start(serial_rx);
+
+    t2.start(LeftMotor);
 
     Thread::wait(1000);
-    serialBuffer = char(MOTOR1_REVERSE);
+    serialBuffer = char(ARM_MOTOR1_REVERSE);
     Thread::wait(1000);
-    serialBuffer = char(MOTOR3_REVERSE);
+    serialBuffer = char(ARM_MOTOR3_REVERSE);
     Thread::wait(2000);
+
+    commanded = ROVER_MOTOR1_FORWARD;
+    Thread::wait(5000);
+    commanded = ROVER_MOTOR1_REVERSE;
+
+    State currentState = PATH_FIND;
+
     while (true) {
-        //led1 = !led1;
+        while (true) {
+            // State machine logic
+            switch (currentState) {
+                case STANDBY:
+                    //currentState = ;
+                    break;
+                case MANUAL:
+                    //currentState = ;
+                    break;
+                case PATH_FIND:
+                    //currentState = ;
+                    break;
+                case ARM:
+                    //currentState = ;
+                    break;
+            }
+    }
+
+
         Thread::wait(500);
     }
 }
