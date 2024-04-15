@@ -47,82 +47,87 @@ void RightMotor()
 }
 
 // From: https://os.mbed.com/users/4180_1/notebook/adafruit-bluefruit-le-uart-friend---bluetooth-low-/
-//Button 1 -> Standby
-//Button 2 -> Manual
+//See Control Pad GUI
+//Button 1 -> Manual
+//Button 2 -> Path_Find
+//Button 3 -> Reserved, Standby --> Useless, don't use
     // Up (5), Down (6), Left (7), Right (8)
     // On hit, will move motor. On release, will stop motor
     // Up is pos, down negative. 
     // Left moves left motor reverse, right forward  
-//Button 3 -> Path_Find
+
 void bluetooth_thread()
 {
-char bnum=0;
+    char bnum=0;
     char bhit=0;
     while(1) {
-        if (blue.getc()=='!') {
-            if (blue.getc()=='B') { //button data packet
-                bnum = blue.getc(); //button number
-                bhit = blue.getc(); //1=hit, 0=release
-                if (blue.getc()==char(~('!' + 'B' + bnum + bhit))) { //checksum OK?
-                    switch (bnum) {
-                        case '1': //number button 1
-                            if (bhit=='1') {
-                                //add hit code here
-                            } else {
-                                //add release code here
-                            }
-                            break;
-                        case '2': //number button 2
-                            if (bhit=='1') {
-                                //add hit code here
-                            } else {
-                                //add release code here
-                            }
-                            break;
-                        case '3': //number button 3
-                            if (bhit=='1') {
-                                //add hit code here
-                            } else {
-                                //add release code here
-                            }
-                            break;
-                        case '4': //number button 4
-                            if (bhit=='1') {
-                                //add hit code here
-                            } else {
-                                //add release code here
-                            }
-                            break;
-                        case '5': //button 5 up arrow
-                            if (bhit=='1') {
-                                //add hit code here
-                            } else {
-                                //add release code here
-                            }
-                            break;
-                        case '6': //button 6 down arrow
-                            if (bhit=='1') {
-                                //add hit code here
-                            } else {
-                                //add release code here
-                            }
-                            break;
-                        case '7': //button 7 left arrow
-                            if (bhit=='1') {
-                                //add hit code here
-                            } else {
-                                //add release code here
-                            }
-                            break;
-                        case '8': //button 8 right arrow
-                            if (bhit=='1') {
-                                //add hit code here
-                            } else {
-                                //add release code here
-                            }
-                            break;
-                        default:
-                            break;
+        if (blue.readable()) {
+            if (bluetooth_connect == FALSE) bluetooth_connect = TRUE;
+            if (blue.getc()=='!') {
+                if (blue.getc()=='B') { //button data packet
+                    bnum = blue.getc(); //button number
+                    bhit = blue.getc(); //1=hit, 0=release
+                    if (blue.getc()==char(~('!' + 'B' + bnum + bhit))) { //checksum OK?
+                        switch (bnum) {
+                            case '1': //number button 1
+                                if (bhit=='1') {
+                                    //add hit code here
+                                } else {
+                                    //add release code here
+                                }
+                                break;
+                            case '2': //number button 2
+                                if (bhit=='1') {
+                                    //add hit code here
+                                } else {
+                                    //add release code here
+                                }
+                                break;
+                            case '3': //number button 3
+                                if (bhit=='1') {
+                                    //add hit code here
+                                } else {
+                                    //add release code here
+                                }
+                                break;
+                            case '4': //number button 4
+                                if (bhit=='1') {
+                                    //add hit code here
+                                } else {
+                                    //add release code here
+                                }
+                                break;
+                            case '5': //button 5 up arrow
+                                if (bhit=='1') {
+                                    //add hit code here
+                                } else {
+                                    //add release code here
+                                }
+                                break;
+                            case '6': //button 6 down arrow
+                                if (bhit=='1') {
+                                    //add hit code here
+                                } else {
+                                    //add release code here
+                                }
+                                break;
+                            case '7': //button 7 left arrow
+                                if (bhit=='1') {
+                                    //add hit code here
+                                } else {
+                                    //add release code here
+                                }
+                                break;
+                            case '8': //button 8 right arrow
+                                if (bhit=='1') {
+                                    //add hit code here
+                                } else {
+                                    //add release code here
+                                }
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 }
             }
@@ -198,6 +203,7 @@ int main() {
 
     t2.start(LeftMotor);
 
+    //Test Inputs to Serial, Motor
     Thread::wait(1000);
     serialBuffer = char(ARM_MOTOR1_REVERSE);
     Thread::wait(1000);
@@ -215,10 +221,14 @@ int main() {
             // State machine logic
             switch (currentState) {
                 case STANDBY:
-                    //currentState = ;
+                    //If Bluetooth Connects during init, then start with Manual Control
+                    if (bluetooth_connect == TRUE) currentState = MANUAL;
+                    else currentState = STANDBY;
                     break;
                 case MANUAL:
-                    //currentState = ;
+                    //If autonomous line-following commanded, switch to Pathfinding
+                    if (autonomous_commanded == TRUE) currentState = PATH_FIND;
+                    else currentState = MANUAL;
                     break;
                 case PATH_FIND:
                     //currentState = ;

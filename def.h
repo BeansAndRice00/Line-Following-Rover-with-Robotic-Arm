@@ -6,6 +6,8 @@
 #ifndef DEF_H
 #define DEF_H
 
+#define TRUE    1
+#define FALSE   0
 
 #define ARM_TX  p9
 #define ARM_RX  p10
@@ -86,5 +88,8 @@ volatile RoverCommand commanded    = ROVER_RESERVED;
 volatile float position     = 0.5;
 volatile float sample       = 0;
 
+//State-Changing Variables
+volatile bool bluetooth_connect     = FALSE;
+volatile bool autonomous_commanded  = FALSE;
 
 #endif 
