@@ -27,14 +27,13 @@ void LeftMotor()
     while(true) {       
 
         //pc.printf("Left Motor Running\n");
-        led1 = ~led1;
+        led1 = !led1;
         sample      = util_speedConversion(commanded); 
         //sample      = -1.0; 
         position    = sample;
-        m_l.speed(position);
+        m_r.speed(position);
         //wait(0.02);
         Thread::wait(1000);
-
     }
 }
 
@@ -44,7 +43,7 @@ void RightMotor()
     while(true) {       
 
         //pc.printf("Right Motor Running\n");
-        led2 = ~led2;
+        led2 = !led2;
         sample      = util_speedConversion(commanded); 
         //sample      = -1.0; 
         position    = sample;
@@ -70,7 +69,7 @@ void bluetooth_thread()
     char bhit=0;
     while(1) {
         if (blue.readable()) {
-            led4 = ~led4;
+            led4 = !led4;
             if (bluetooth_connect == FALSE) bluetooth_connect = TRUE;
             if (blue.getc()=='!') {
                 if (blue.getc()=='B') { //button data packet
@@ -223,9 +222,9 @@ int main() {
 
     t1.start(serial_tx);
 
-    //t2.start(LeftMotor);
-    //t3.start(RightMotor);
-    //t4.start(bluetooth_thread);
+    t2.start(LeftMotor);
+    t3.start(RightMotor);
+    t4.start(bluetooth_thread);
 
     //Test Inputs to Serial, Motor
     Thread::wait(1000);
