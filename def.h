@@ -16,6 +16,33 @@
 #define ROVER_TX  p13
 #define ROVER_RX  p14
 
+void RightMotor(); 
+void RightMotor();
+
+// From: https://os.mbed.com/users/4180_1/notebook/adafruit-bluefruit-le-uart-friend---bluetooth-low-/
+//See Control Pad GUI
+//Button 1 -> Manual
+//Button 2 -> Path_Find
+//Button 3 -> Reserved, Standby --> Useless, don't use
+    // Up (5), Down (6), Left (7), Right (8)
+    // On hit, will move motor. On release, will stop motor
+    // Up is pos, down negative. 
+    // Left moves left motor reverse, right forward  
+void bluetooth_thread();
+void blueTooth_init();
+
+//From Lab 4
+void serial_rx();
+
+//Adapted from Lab 4
+//char serialBuffer = 0;
+void serial_tx();
+
+void serial_init();
+
+
+
+
 
 //Set of Commands to be used by Rover during Manual and Line-Following
     //Motor1 -> Left Motor
@@ -75,10 +102,10 @@ Thread t5;
 
 AnalogOut DACout(p18);
 
-RawSerial pc(USBTX, USBRX);  // Initialize a serial port for USB communication
-RawSerial arm(ARM_TX, ARM_RX);  // Initialize a serial port for USB communication
-RawSerial rover(ROVER_TX, ROVER_RX);  // Initialize a serial port for USB communication
-RawSerial blue(BLUE_TX, BLUE_RX);     // Initialize another serial port using pins p28 and p27
+RawSerial pc(USBTX, USBRX);             // Initialize a serial port for USB communication
+RawSerial arm(ARM_TX, ARM_RX);          // Initialize a serial port for USB communication
+RawSerial rover(ROVER_TX, ROVER_RX);    // Initialize a serial port for USB communication
+RawSerial blue(BLUE_TX, BLUE_RX);       // Initialize another serial port using pins p28 and p27
 
 volatile char serialBuffer;
 volatile char serialBuffer_old;
@@ -95,5 +122,8 @@ volatile float sample       = 0;
 //State-Changing Variables
 volatile bool bluetooth_connect     = FALSE;
 volatile bool autonomous_commanded  = FALSE;
+volatile bool manual_commanded      = FALSE;
+volatile bool object_detected       = FALSE;
+
 
 #endif 

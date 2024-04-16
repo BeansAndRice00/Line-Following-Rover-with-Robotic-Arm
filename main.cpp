@@ -23,60 +23,36 @@ float util_speedConversion(enum RoverCommand commanded)
 
 }
 
-void LeftMotor() 
-{
-    while(true) {       
-
-        //pc.printf("Left Motor Running\n");
-        led1 = !led1;
-        sample      = util_speedConversion(commanded); 
-        //sample      = -1.0; 
-        position    = sample;
-        m_r.speed(position);
-        //wait(0.02);
-        Thread::wait(1000);
-    }
-}
-
-
 void RightMotor() 
 {
     while(true) {       
 
-        //pc.printf("Right Motor Running\n");
-        led2 = !led2;
+        led1 = !led1;
         sample      = util_speedConversion(commanded); 
-        //sample      = -1.0; 
         position    = sample;
         m_r.speed(position);
-        //wait(0.02);
         Thread::wait(1000);
     }
 }
 
-// From: https://os.mbed.com/users/4180_1/notebook/adafruit-bluefruit-le-uart-friend---bluetooth-low-/
-//See Control Pad GUI
-//Button 1 -> Manual
-//Button 2 -> Path_Find
-//Button 3 -> Reserved, Standby --> Useless, don't use
-    // Up (5), Down (6), Left (7), Right (8)
-    // On hit, will move motor. On release, will stop motor
-    // Up is pos, down negative. 
-    // Left moves left motor reverse, right forward  
+
+void LeftMotor() 
+{
+    while(true) {       
+
+        led2 = !led2;
+        sample      = util_speedConversion(commanded); 
+        position    = sample;
+        m_r.speed(position);
+        Thread::wait(1000);
+    }
+}
 
 void bluetooth_thread()
 {
     char bnum=0;
     char bhit=0;
     while(1) {
-        //("In Blue\n\n\r");
-        //Thread::wait(100);
-        //bnum = blue.getc();
-        //if (blue.readable())
-            //led4 = 1;
-
-        //Thread::wait(50);
-            
         if (blue.readable()) {
             led4 = !led4;
             if (bluetooth_connect == FALSE) bluetooth_connect = TRUE;
@@ -149,9 +125,7 @@ void bluetooth_thread()
                 }
             }
         }
-
         Thread::wait(50);
-       
     }
 }
 
@@ -160,7 +134,6 @@ void blueTooth_init()
     blue.baud(9600); // Set the baud rate for the device serial port
 }
 
-//From Lab 4
 void serial_rx()
 {
     char temp = 0;
@@ -186,27 +159,19 @@ void serial_rx()
     //Thread::wait(50);
 }
 
-//Adapted from Lab 4
-//char serialBuffer = 0;
 void serial_tx()
 {
     serialBuffer = ARM_MOTOR3_REVERSE;
-    //led1 = !led1;
     while(1)
     {
         char temp = 0;
-        //while(rover.writeable() && serialBuffer != serialBuffer_old) {
         if (rover.writeable()){ 
-            //pc.printf("Tx-ing\n");
             if (serialBuffer == ARM_MOTOR3_REVERSE) serialBuffer = ARM_MOTOR3_FORWARD;
             else serialBuffer = ARM_MOTOR3_REVERSE;
 
             rover.putc(serialBuffer);
             serialBuffer_old = serialBuffer;
-        } else {
-            //pc.printf("Not Writeable\n");
         }
-
         Thread::wait(1000);
     }
 }
@@ -228,12 +193,10 @@ void serial_init()
 
 
 int main() {
-    //pc.printf("Start\n");
     blueTooth_init();
     serial_init();
 
     t1.start(serial_tx);
-
     t2.start(LeftMotor);
     t3.start(RightMotor);
     t4.start(bluetooth_thread);
@@ -257,24 +220,27 @@ int main() {
             switch (currentState) {
                 case STANDBY:
                     //If Bluetooth Connects during init, then start with Manual Control
-                    if (bluetooth_connect == TRUE) currentState = MANUAL;
-                    else currentState = STANDBY;
+                    if (bluetooth_connect == TRUE)      currentState = MANUAL;
+                    else                                currentState = STANDBY;
                     break;
                 case MANUAL:
                     //If autonomous line-following commanded, switch to Pathfinding
-                    if (autonomous_commanded == TRUE) currentState = PATH_FIND;
-                    else currentState = MANUAL;
+                    if (autonomous_commanded == TRUE)   currentState = PATH_FIND;
+                    else                                currentState = MANUAL;
                     break;
                 case PATH_FIND:
-                    //currentState = ;
+                    //If user wants manual control, then manual. If an object is detected, then switch to Arm
+                    if (manual_commanded == TRUE)       currentState = MANUAL;
+                    if (object_detected == TRUE)        currentState = ARM;
                     break;
                 case ARM:
-                    //currentState = ;
+                    //If user wants manual control, then manual. If an object is detected, then switch to Arm
+                    if (manual_commanded == TRUE)       currentState = MANUAL;
+                    if (autonomous_commanded == TRUE)   currentState = PATH_FIND;
+                    if (object_detected == TRUE)        currentState = ARM;
                     break;
             }
     }
-
-
         Thread::wait(500);
     }
 }
