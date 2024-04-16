@@ -1,3 +1,4 @@
+#include "Thread.h"
 #include "def.h"
 
 float util_speedConversion(enum RoverCommand commanded)
@@ -68,6 +69,14 @@ void bluetooth_thread()
     char bnum=0;
     char bhit=0;
     while(1) {
+        //("In Blue\n\n\r");
+        //Thread::wait(100);
+        //bnum = blue.getc();
+        //if (blue.readable())
+            //led4 = 1;
+
+        //Thread::wait(50);
+            
         if (blue.readable()) {
             led4 = !led4;
             if (bluetooth_connect == FALSE) bluetooth_connect = TRUE;
@@ -140,6 +149,9 @@ void bluetooth_thread()
                 }
             }
         }
+
+        Thread::wait(50);
+       
     }
 }
 
