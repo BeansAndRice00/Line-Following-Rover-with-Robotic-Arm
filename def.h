@@ -2,6 +2,7 @@
 #include "rtos.h"
 #include "uLCD_4DGL.h"     //Updated LCD Library
 #include "Motor.h"
+#include "Servo.h"
 
 #ifndef DEF_H
 #define DEF_H
@@ -14,6 +15,7 @@
 
 #define ROVER_TX  p13
 #define ROVER_RX  p14
+
 
 //Set of Commands to be used by Rover during Manual and Line-Following
     //Motor1 -> Left Motor
@@ -62,6 +64,7 @@ volatile State currentState = PATH_FIND;
 DigitalOut led1(LED1);
 DigitalOut led2(LED2);
 DigitalOut led3(LED3);
+DigitalOut led4(LED4);
 
 Thread thread;
 Thread t1;
@@ -82,7 +85,8 @@ volatile char serialBuffer_old;
 
 
 //Motor
-Motor m(p23, p6, p5); // pwm, fwd, rev
+Motor m_l(p23, p6, p5);     // pwm, fwd, rev
+Motor m_r(p24, p12, p11);   // pwm, fwd, rev
 //AnalogIn pot(p20);
 volatile RoverCommand commanded    = ROVER_RESERVED;
 volatile float position     = 0.5;

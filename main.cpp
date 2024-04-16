@@ -26,11 +26,12 @@ void LeftMotor()
 {
     while(true) {       
 
-        pc.printf("Left Motor Running\n");
-        //if ()
+        //pc.printf("Left Motor Running\n");
+        led1 = ~led1;
         sample      = util_speedConversion(commanded); 
+        //sample      = -1.0; 
         position    = sample;
-        m.speed(position); 
+        m_l.speed(position);
         //wait(0.02);
         Thread::wait(1000);
 
@@ -42,6 +43,13 @@ void RightMotor()
 {
     while(true) {       
 
+        //pc.printf("Right Motor Running\n");
+        led2 = ~led2;
+        sample      = util_speedConversion(commanded); 
+        //sample      = -1.0; 
+        position    = sample;
+        m_r.speed(position);
+        //wait(0.02);
         Thread::wait(1000);
     }
 }
@@ -62,6 +70,7 @@ void bluetooth_thread()
     char bhit=0;
     while(1) {
         if (blue.readable()) {
+            led4 = ~led4;
             if (bluetooth_connect == FALSE) bluetooth_connect = TRUE;
             if (blue.getc()=='!') {
                 if (blue.getc()=='B') { //button data packet
@@ -144,37 +153,50 @@ void blueTooth_init()
 void serial_rx()
 {
     char temp = 0;
-    while(1)
-    {
-        while(rover.readable()) {
-            pc.printf("Rx-ing\n");
-            temp = rover.getc();
-            if (temp=='1') led2 = 1;
-            if (temp=='0') led3 = 1;
-            else 
-            {
-                pc.printf("%c\n", temp);
-                led1 = 1;
-            }
-            
+    if(rover.readable()) {
+        //pc.printf("Rx-ing\n");
+        //led3 = ~led3;
+        wait(0.050);
+        temp = rover.getc();
+        if (temp==ARM_MOTOR3_REVERSE) 
+        {
+            //led2 = 1;
+            led3 = 0;
         }
-        Thread::wait(50);
+        if (temp==ARM_MOTOR3_FORWARD) 
+        {
+            led3 = 1;
+            //led2 = 0;
+        }
+        //pc.printf("%d\n", temp);
+
+        //wait(0.050);
     }
+    //Thread::wait(50);
 }
 
 //Adapted from Lab 4
+//char serialBuffer = 0;
 void serial_tx()
 {
-    char serialBuffer = 0;
+    serialBuffer = ARM_MOTOR3_REVERSE;
     //led1 = !led1;
     while(1)
     {
-        while(rover.writeable() && serialBuffer != serialBuffer_old) {
-            pc.printf("Tx-ing\n");
+        char temp = 0;
+        //while(rover.writeable() && serialBuffer != serialBuffer_old) {
+        if (rover.writeable()){ 
+            //pc.printf("Tx-ing\n");
+            if (serialBuffer == ARM_MOTOR3_REVERSE) serialBuffer = ARM_MOTOR3_FORWARD;
+            else serialBuffer = ARM_MOTOR3_REVERSE;
+
             rover.putc(serialBuffer);
             serialBuffer_old = serialBuffer;
+        } else {
+            //pc.printf("Not Writeable\n");
         }
-        Thread::wait(50);
+
+        Thread::wait(1000);
     }
 }
 
@@ -195,13 +217,15 @@ void serial_init()
 
 
 int main() {
-    pc.printf("Start\n");
+    //pc.printf("Start\n");
     blueTooth_init();
     serial_init();
 
     t1.start(serial_tx);
 
-    t2.start(LeftMotor);
+    //t2.start(LeftMotor);
+    //t3.start(RightMotor);
+    //t4.start(bluetooth_thread);
 
     //Test Inputs to Serial, Motor
     Thread::wait(1000);
