@@ -1,20 +1,23 @@
 #include "Thread.h"
 #include "def.h"
 
-float util_speedConversion(enum RoverCommand commanded)
+float util_speedConversion(int commanded)
 {
-    switch (commanded) {
-        case ROVER_MOTOR1_FORWARD: //number button 1
+    switch ((enum RoverCommand) commanded) {
+        case ROVER_MOTOR1_FORWARD:
             return 0.5;
             break;
-        case ROVER_MOTOR1_REVERSE: //number button 1
+        case ROVER_MOTOR1_REVERSE:
             return -0.5;
             break;
-        case ROVER_MOTOR2_FORWARD: //number button 1
+        case ROVER_MOTOR2_FORWARD:
             return 0.5;
             break;
-        case ROVER_MOTOR2_REVERSE: //number button 1
+        case ROVER_MOTOR2_REVERSE:
             return -0.5;
+            break;
+        case ROVER_STOPPED:
+            return 0.0;
             break;
         default:
             return 0.0;
@@ -23,28 +26,54 @@ float util_speedConversion(enum RoverCommand commanded)
 
 }
 
-void RightMotor() 
+void LeftRightMotor() 
 {
     while(true) {       
 
-        led1 = !led1;
-        sample      = util_speedConversion(commanded); 
-        position    = sample;
-        m_r.speed(position);
-        Thread::wait(1000);
-    }
-}
+        //led1 = !led1;
+        left_speed      = util_speedConversion(rover_commanded >> 8); 
+        right_speed     = util_speedConversion(0x00FF & rover_commanded); 
 
+        serial_lock.lock();
+        pc.printf("left speed: %f\n", left_speed);
+        pc.printf("right speed: %f\n", right_speed);
+        serial_lock.unlock();
 
-void LeftMotor() 
-{
-    while(true) {       
+//Testing Code
+        if (left_speed == 0.5)
+        {
+            led1 = 1;
+            led2 = 0;
+            led3 = 0;
+            led4 = 0;
 
-        led2 = !led2;
-        sample      = util_speedConversion(commanded); 
-        position    = sample;
-        m_r.speed(position);
-        Thread::wait(1000);
+        }
+        if (left_speed == -0.5)
+        {
+            led1 = 0;
+            led2 = 1;
+            led3 = 0;
+            led4 = 0;
+        }
+        if (right_speed == 0.5)
+        {
+            led1 = 0;
+            led2 = 0;
+            led3 = 1;
+            led4 = 0;
+        }
+        if (right_speed == -0.5)
+        {
+            led1 = 0;
+            led2 = 0;
+            led3 = 0;
+            led4 = 1;
+        }
+
+        m_r.speed(left_speed);
+        m_l.speed(right_speed);
+
+        Thread::wait(1500);
     }
 }
 
@@ -54,8 +83,8 @@ void bluetooth_thread()
     char bhit=0;
     while(1) {
         if (blue.readable()) {
-            led4 = !led4;
-            if (bluetooth_connect == FALSE) bluetooth_connect = TRUE;
+            if (bluetooth_connect == FALSE) bluetooth_connect = TRUE; //We connected for the first time.
+            //led4 = !led4;
             if (blue.getc()=='!') {
                 if (blue.getc()=='B') { //button data packet
                     bnum = blue.getc(); //button number
@@ -64,58 +93,58 @@ void bluetooth_thread()
                         switch (bnum) {
                             case '1': //number button 1
                                 if (bhit=='1') {
-                                    //add hit code here
+                                    currentState = MANUAL;
                                 } else {
                                     //add release code here
                                 }
                                 break;
                             case '2': //number button 2
                                 if (bhit=='1') {
-                                    //add hit code here
+                                    currentState = PATH_FIND;
                                 } else {
                                     //add release code here
                                 }
                                 break;
                             case '3': //number button 3
                                 if (bhit=='1') {
-                                    //add hit code here
+                                    currentState = ARM;
                                 } else {
                                     //add release code here
                                 }
                                 break;
                             case '4': //number button 4
                                 if (bhit=='1') {
-                                    //add hit code here
+                                    //Nothing
                                 } else {
                                     //add release code here
                                 }
                                 break;
                             case '5': //button 5 up arrow
                                 if (bhit=='1') {
-                                    //add hit code here
+                                    if (currentState == MANUAL) rover_commanded = ROVER_MOTOR1_FORWARD << 8 | ROVER_MOTOR2_FORWARD;
                                 } else {
-                                    //add release code here
+                                    if (currentState == MANUAL) rover_commanded = ROVER_STOPPED;
                                 }
                                 break;
                             case '6': //button 6 down arrow
                                 if (bhit=='1') {
-                                    //add hit code here
+                                    if (currentState == MANUAL) rover_commanded = ROVER_MOTOR1_REVERSE << 8 | ROVER_MOTOR2_REVERSE;
                                 } else {
-                                    //add release code here
+                                    if (currentState == MANUAL) rover_commanded = ROVER_STOPPED;
                                 }
                                 break;
                             case '7': //button 7 left arrow
                                 if (bhit=='1') {
-                                    //add hit code here
+                                    if (currentState == MANUAL) rover_commanded = ROVER_MOTOR1_REVERSE << 8 | ROVER_MOTOR2_FORWARD;
                                 } else {
-                                    //add release code here
+                                    if (currentState == MANUAL) rover_commanded = ROVER_STOPPED;
                                 }
                                 break;
                             case '8': //button 8 right arrow
                                 if (bhit=='1') {
-                                    //add hit code here
+                                    if (currentState == MANUAL) rover_commanded = ROVER_MOTOR1_FORWARD << 8 | ROVER_MOTOR2_REVERSE;
                                 } else {
-                                    //add release code here
+                                    if (currentState == MANUAL) rover_commanded = ROVER_STOPPED;
                                 }
                                 break;
                             default:
@@ -125,7 +154,12 @@ void bluetooth_thread()
                 }
             }
         }
-        Thread::wait(50);
+        serial_lock.lock();
+        pc.printf("Rover Commanded: %x\n", rover_commanded);
+        pc.printf("State: %x\n", currentState);
+        serial_lock.unlock();
+
+        Thread::wait(1500);
     }
 }
 
@@ -145,11 +179,11 @@ void serial_rx()
         if (temp==ARM_MOTOR3_REVERSE) 
         {
             //led2 = 1;
-            led3 = 0;
+            //led3 = 0;
         }
         if (temp==ARM_MOTOR3_FORWARD) 
         {
-            led3 = 1;
+            //led3 = 1;
             //led2 = 0;
         }
         //pc.printf("%d\n", temp);
@@ -197,35 +231,22 @@ int main() {
     serial_init();
 
     t1.start(serial_tx);
-    t2.start(LeftMotor);
-    t3.start(RightMotor);
+    t2.start(LeftRightMotor);
     t4.start(bluetooth_thread);
 
-    //Test Inputs to Serial, Motor
-    Thread::wait(1000);
-    serialBuffer = char(ARM_MOTOR1_REVERSE);
-    Thread::wait(1000);
-    serialBuffer = char(ARM_MOTOR3_REVERSE);
-    Thread::wait(2000);
-
-    commanded = ROVER_MOTOR1_FORWARD;
-    Thread::wait(5000);
-    commanded = ROVER_MOTOR1_REVERSE;
-
-    State currentState = PATH_FIND;
+    State currentState = MANUAL;
 
     while (true) {
-        while (true) {
             // State machine logic
             switch (currentState) {
                 case STANDBY:
                     //If Bluetooth Connects during init, then start with Manual Control
-                    if (bluetooth_connect == TRUE)      currentState = MANUAL;
+                    if (bluetooth_connect == TRUE)      currentState = MANUAL; 
                     else                                currentState = STANDBY;
                     break;
                 case MANUAL:
                     //If autonomous line-following commanded, switch to Pathfinding
-                    if (autonomous_commanded == TRUE)   currentState = PATH_FIND;
+                    if (autonomous_commanded == TRUE)   {currentState = PATH_FIND; autonomous_commanded = FALSE;}
                     else                                currentState = MANUAL;
                     break;
                 case PATH_FIND:
@@ -240,7 +261,6 @@ int main() {
                     if (object_detected == TRUE)        currentState = ARM;
                     break;
             }
-    }
-        Thread::wait(500);
+            Thread::wait(500);
     }
 }

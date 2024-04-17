@@ -1,3 +1,4 @@
+#include "Mutex.h"
 #include "mbed.h"
 #include "rtos.h"
 #include "uLCD_4DGL.h"     //Updated LCD Library
@@ -40,18 +41,19 @@ void serial_tx();
 
 void serial_init();
 
-
+Mutex serial_lock; 
 
 
 
 //Set of Commands to be used by Rover during Manual and Line-Following
     //Motor1 -> Left Motor
 enum RoverCommand {
-    ROVER_MOTOR1_FORWARD,     // 000
-    ROVER_MOTOR1_REVERSE,     // 001
-    ROVER_MOTOR2_FORWARD,     // 010
-    ROVER_MOTOR2_REVERSE,     // 011
-    ROVER_RESERVED,           // 100
+    ROVER_STOPPED,            // 000
+    ROVER_MOTOR1_FORWARD,     // 001
+    ROVER_MOTOR1_REVERSE,     // 010
+    ROVER_MOTOR2_FORWARD,     // 011
+    ROVER_MOTOR2_REVERSE,     // 100
+    ROVER_RESERVED,           // 101
 };
 
 enum ArmCommand {
@@ -83,7 +85,7 @@ enum BT_CONTROLLER {
     BUTTON_RIGHT
 };
 
-volatile State currentState = PATH_FIND;
+volatile State currentState = MANUAL;
 
 #define BLUE_TX p28
 #define BLUE_RX p27
@@ -115,9 +117,10 @@ volatile char serialBuffer_old;
 Motor m_l(p23, p6, p5);     // pwm, fwd, rev
 Motor m_r(p24, p12, p11);   // pwm, fwd, rev
 //AnalogIn pot(p20);
-volatile RoverCommand commanded    = ROVER_RESERVED;
-volatile float position     = 0.5;
-volatile float sample       = 0;
+volatile int            rover_commanded    = ROVER_RESERVED;
+volatile ArmCommand     arm_commanded      = ARM_RESERVED;
+volatile float left_speed       = 0.0;
+volatile float right_speed      = 0.0;
 
 //State-Changing Variables
 volatile bool bluetooth_connect     = FALSE;
