@@ -34,11 +34,12 @@ void LeftRightMotor()
         left_speed      = util_speedConversion(rover_commanded >> 8); 
         right_speed     = util_speedConversion(0x00FF & rover_commanded); 
 
+/*
         serial_lock.lock();
         pc.printf("left speed: %f\n", left_speed);
         pc.printf("right speed: %f\n", right_speed);
         serial_lock.unlock();
-
+*/
 //Testing Code
         if (left_speed == 0.5)
         {
@@ -73,7 +74,7 @@ void LeftRightMotor()
         m_r.speed(left_speed);
         m_l.speed(right_speed);
 
-        Thread::wait(1500);
+        //Thread::wait(1500);
     }
 }
 
@@ -154,12 +155,13 @@ void bluetooth_thread()
                 }
             }
         }
+        /*
         serial_lock.lock();
         pc.printf("Rover Commanded: %x\n", rover_commanded);
         pc.printf("State: %x\n", currentState);
         serial_lock.unlock();
-
-        Thread::wait(1500);
+        */
+        //Thread::wait(1500);
     }
 }
 
