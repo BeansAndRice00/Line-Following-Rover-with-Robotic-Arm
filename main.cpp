@@ -41,6 +41,7 @@ void LeftRightMotor()
         serial_lock.unlock();
 */
 //Testing Code
+/*
         if (left_speed == 0.5)
         {
             led1 = 1;
@@ -70,7 +71,7 @@ void LeftRightMotor()
             led3 = 0;
             led4 = 1;
         }
-
+*/
         m_r.speed(left_speed);
         m_l.speed(right_speed);
 
@@ -81,7 +82,7 @@ void LeftRightMotor()
 void bluetooth_thread()
 {
     char bnum=0;
-    char bhit=0;
+    bhit=0;
     while(1) {
         if (blue.readable()) {
             if (bluetooth_connect == FALSE) bluetooth_connect = TRUE; //We connected for the first time.
@@ -90,6 +91,7 @@ void bluetooth_thread()
                 if (blue.getc()=='B') { //button data packet
                     bnum = blue.getc(); //button number
                     bhit = blue.getc(); //1=hit, 0=release
+
                     if (blue.getc()==char(~('!' + 'B' + bnum + bhit))) { //checksum OK?
                         switch (bnum) {
                             case '1': //number button 1
@@ -137,15 +139,34 @@ void bluetooth_thread()
                             case '7': //button 7 left arrow
                                 if (bhit=='1') {
                                     if (currentState == MANUAL) rover_commanded = ROVER_MOTOR1_REVERSE << 8 | ROVER_MOTOR2_FORWARD;
+                                    if (currentState == ARM) {
+                                        move_arm = 1;
+                                        arm_commanded = ARM_MOTOR1_FORWARD;
+                                    }
                                 } else {
                                     if (currentState == MANUAL) rover_commanded = ROVER_STOPPED;
+                                    if (currentState == ARM) 
+                                    { 
+                                        move_arm = 0;
+                                        arm_commanded = ARM_MOTOR1_STOPPED;
+                                    }
                                 }
                                 break;
                             case '8': //button 8 right arrow
                                 if (bhit=='1') {
                                     if (currentState == MANUAL) rover_commanded = ROVER_MOTOR1_FORWARD << 8 | ROVER_MOTOR2_REVERSE;
+                                    if (currentState == ARM) {                                       
+                                        move_arm = 1;
+                                        arm_commanded = ARM_MOTOR1_REVERSE;                                       
+                                    }
+
                                 } else {
                                     if (currentState == MANUAL) rover_commanded = ROVER_STOPPED;
+                                    if (currentState == ARM) 
+                                    { 
+                                        move_arm = 0;
+                                        arm_commanded = ARM_MOTOR1_STOPPED;
+                                    }
                                 }
                                 break;
                             default:
@@ -155,13 +176,6 @@ void bluetooth_thread()
                 }
             }
         }
-        /*
-        serial_lock.lock();
-        pc.printf("Rover Commanded: %x\n", rover_commanded);
-        pc.printf("State: %x\n", currentState);
-        serial_lock.unlock();
-        */
-        //Thread::wait(1500);
     }
 }
 
@@ -227,6 +241,34 @@ void serial_init()
     //pc.attach(&serial_rx, Serial::RxIrq);
 }
 
+void IR_init()
+{
+
+}
+
+void check_move_arm() {
+    float change = 0.0f;
+    while(1) {
+        if (move_arm)
+        {
+            if (arm_commanded == ARM_MOTOR1_FORWARD) change = 0.0000015;
+            if (arm_commanded == ARM_MOTOR1_REVERSE) change = -0.0000015;
+            for (float i = base.read(); i >= 0.0f; i += change) {
+                base.write(i);
+                if (!move_arm) {
+                    break;
+                }
+            }
+        }
+        else
+        {
+            change = 0.0f;
+            //Could also set arm_commanded to stopped...
+        }
+    }
+}
+
+
 
 int main() {
     blueTooth_init();
@@ -235,8 +277,8 @@ int main() {
     t1.start(serial_tx);
     t2.start(LeftRightMotor);
     t4.start(bluetooth_thread);
-
-    State currentState = MANUAL;
+    t3.start(check_move_arm);
+    
 
     while (true) {
             // State machine logic
@@ -263,6 +305,30 @@ int main() {
                     if (object_detected == TRUE)        currentState = ARM;
                     break;
             }
-            Thread::wait(500);
+            Thread::wait(50);
+            if (currentState == STANDBY) { 
+                led1 = 1;
+                led2 = 0;
+                led3 = 0;
+                led4 = 0;
+            }
+            if (currentState == MANUAL) { 
+                led1 = 0;
+                led2 = 1;
+                led3 = 0;
+                led4 = 0;
+            }
+            if (currentState == PATH_FIND) { 
+                led1 = 0;
+                led2 = 0;
+                led3 = 1;
+                led4 = 0;
+            }
+            if (currentState == ARM) { 
+                led1 = 0;
+                led2 = 0;
+                led3 = 0;
+                led4 = 1;
+            }
     }
 }

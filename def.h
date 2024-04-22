@@ -18,7 +18,13 @@
 #define ROVER_RX  p14
 
 void RightMotor(); 
-void RightMotor();
+void LeftMotor();
+
+
+//DEGUB
+#define STATE_MACHINE
+#define ROVER_THREADS
+#define ARM_THREADS
 
 // From: https://os.mbed.com/users/4180_1/notebook/adafruit-bluefruit-le-uart-friend---bluetooth-low-/
 //See Control Pad GUI
@@ -63,6 +69,9 @@ enum ArmCommand {
     ARM_MOTOR2_REVERSE,     // 011
     ARM_MOTOR3_FORWARD,     // 100
     ARM_MOTOR3_REVERSE,     // 101
+    ARM_MOTOR1_STOPPED,    
+    ARM_MOTOR2_STOPPED,    
+    ARM_MOTOR3_STOPPED,
     ARM_RESERVED,           // 110
 };
 
@@ -85,7 +94,7 @@ enum BT_CONTROLLER {
     BUTTON_RIGHT
 };
 
-volatile State currentState = MANUAL;
+volatile State currentState = STANDBY;
 
 #define BLUE_TX p28
 #define BLUE_RX p27
@@ -105,9 +114,9 @@ Thread t5;
 AnalogOut DACout(p18);
 
 RawSerial pc(USBTX, USBRX);             // Initialize a serial port for USB communication
-RawSerial arm(ARM_TX, ARM_RX);          // Initialize a serial port for USB communication
-RawSerial rover(ROVER_TX, ROVER_RX);    // Initialize a serial port for USB communication
-RawSerial blue(BLUE_TX, BLUE_RX);       // Initialize another serial port using pins p28 and p27
+RawSerial arm(ARM_TX, ARM_RX);          // Initialize a serial port for ARM communication
+RawSerial rover(ROVER_TX, ROVER_RX);    // Initialize a serial port for ROVER communication
+RawSerial blue(BLUE_TX, BLUE_RX);       // Initialize a serial port for Bluetooth communication
 
 volatile char serialBuffer;
 volatile char serialBuffer_old;
@@ -128,5 +137,19 @@ volatile bool autonomous_commanded  = FALSE;
 volatile bool manual_commanded      = FALSE;
 volatile bool object_detected       = FALSE;
 
+#define COLOR_THRESHOLD 1000.0
+#define BASE_COLOR      100.0
+#define IR_SCALE        1000.0
+//volatile AnalogIn IR_in;
+
+
+//ARM
+Servo base(p21);
+Servo s2(p25);
+//Servo s3(p24);
+//Servo s4(p23);
+
+volatile bool move_arm;
+volatile char bhit;
 
 #endif 
