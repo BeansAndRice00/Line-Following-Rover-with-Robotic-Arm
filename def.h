@@ -48,7 +48,7 @@ void serial_tx();
 void serial_init();
 
 Mutex serial_lock; 
-
+Mutex motor_lock; 
 
 
 //Set of Commands to be used by Rover during Manual and Line-Following
