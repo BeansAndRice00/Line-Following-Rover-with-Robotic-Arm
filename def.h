@@ -144,12 +144,21 @@ volatile bool object_detected       = FALSE;
 
 
 //ARM
-Servo base(p21);
-Servo s2(p25);
-//Servo s3(p24);
-//Servo s4(p23);
+Servo base(p21);    //Base Servo
+Servo arm_s1(p25);  //Arm Servo
+Servo arm_s2(p26);  
+Servo claw(p22);    //Claw Servo
 
 volatile bool move_arm;
 volatile char bhit;
+
+
+//Linesensor
+AnalogIn left(p15);   // initialize a left sensor object on p15
+AnalogIn center(p16); // initialize a center sensor object on p16
+AnalogIn right(p17);  // initialize a right sensor object on p17
+#define LINETHRESHOLD 0.8
+
+
 
 #endif 

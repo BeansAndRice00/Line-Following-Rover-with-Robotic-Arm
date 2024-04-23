@@ -1,6 +1,7 @@
 #include "Thread.h"
 #include "def.h"
 
+
 float util_speedConversion(int commanded)
 {
     switch ((enum RoverCommand) commanded) {
@@ -125,15 +126,34 @@ void bluetooth_thread()
                             case '5': //button 5 up arrow
                                 if (bhit=='1') {
                                     if (currentState == MANUAL) rover_commanded = ROVER_MOTOR1_FORWARD << 8 | ROVER_MOTOR2_FORWARD;
+                                    if (currentState == ARM) {
+                                        move_arm = 1;
+                                        arm_commanded = ARM_MOTOR2_FORWARD;
+                                    }
                                 } else {
                                     if (currentState == MANUAL) rover_commanded = ROVER_STOPPED;
+                                    if (currentState == ARM) 
+                                    { 
+                                        move_arm = 0;
+                                        arm_commanded = ARM_MOTOR2_STOPPED;
+                                    }
                                 }
                                 break;
                             case '6': //button 6 down arrow
                                 if (bhit=='1') {
                                     if (currentState == MANUAL) rover_commanded = ROVER_MOTOR1_REVERSE << 8 | ROVER_MOTOR2_REVERSE;
+                                    if (currentState == ARM) 
+                                    { 
+                                        move_arm = 0;
+                                        arm_commanded = ARM_MOTOR2_STOPPED;
+                                    }
                                 } else {
                                     if (currentState == MANUAL) rover_commanded = ROVER_STOPPED;
+                                    if (currentState == ARM) 
+                                    { 
+                                        move_arm = 0;
+                                        arm_commanded = ARM_MOTOR2_STOPPED;
+                                    }
                                 }
                                 break;
                             case '7': //button 7 left arrow
@@ -192,6 +212,7 @@ void serial_rx()
         //led3 = ~led3;
         wait(0.050);
         temp = rover.getc();
+        /*
         if (temp==ARM_MOTOR3_REVERSE) 
         {
             //led2 = 1;
@@ -205,6 +226,7 @@ void serial_rx()
         //pc.printf("%d\n", temp);
 
         //wait(0.050);
+        */
     }
     //Thread::wait(50);
 }
@@ -241,18 +263,50 @@ void serial_init()
     //pc.attach(&serial_rx, Serial::RxIrq);
 }
 
-void IR_init()
-{
+void IR_thread() {
+        //printf("%.2f\t", left.read());   // tab character
+        //printf("%.2f\t", center.read()); // tab character
+        //printf("%.2f\n", right.read());
+		while(1) {
+			if (currentState == PATH_FIND) {
+				// if on the line drive left and right at the same speed (left is CCW / right is CW)
+				if (center.read() > LINETHRESHOLD)
+				{   
+					led1 = 1;
+					if (currentState == PATH_FIND) rover_commanded = ROVER_MOTOR1_FORWARD << 8 | ROVER_MOTOR2_FORWARD;
+				}
+
+				// if the line is under the right sensor, adjust relative speeds to turn to the right
+				else if (right.read() > LINETHRESHOLD)
+				{
+					led2 = 1;
+					if (currentState == PATH_FIND) rover_commanded = ROVER_MOTOR1_FORWARD << 8 | ROVER_MOTOR2_REVERSE;
+				}
+
+				// if the line is under the left sensor, adjust relative speeds to turn to the left
+				else if (left.read() > LINETHRESHOLD)
+				{
+					led4 = 1;
+					if (currentState == PATH_FIND) rover_commanded = ROVER_MOTOR1_REVERSE << 8 | ROVER_MOTOR2_FORWARD;
+				} else {
+					if (currentState == PATH_FIND) rover_commanded = ROVER_STOPPED;
+				}
+			}
+		}
 
 }
+
 
 void check_move_arm() {
     float change = 0.0f;
     while(1) {
         if (move_arm)
         {
-            if (arm_commanded == ARM_MOTOR1_FORWARD) change = 0.0000015;
-            if (arm_commanded == ARM_MOTOR1_REVERSE) change = -0.0000015;
+            if (arm_commanded == ARM_MOTOR1_FORWARD || ARM_MOTOR2_FORWARD || ARM_MOTOR3_FORWARD) 
+                change = 0.0000015;
+            if (arm_commanded == ARM_MOTOR1_REVERSE || ARM_MOTOR2_REVERSE || ARM_MOTOR3_STOPPED) 
+                change = -0.0000015;
+
             for (float i = base.read(); i >= 0.0f; i += change) {
                 base.write(i);
                 if (!move_arm) {
@@ -269,7 +323,6 @@ void check_move_arm() {
 }
 
 
-
 int main() {
     blueTooth_init();
     serial_init();
@@ -278,7 +331,8 @@ int main() {
     t2.start(LeftRightMotor);
     t4.start(bluetooth_thread);
     t3.start(check_move_arm);
-    
+    t5.start(IR_thread);
+
 
     while (true) {
             // State machine logic
