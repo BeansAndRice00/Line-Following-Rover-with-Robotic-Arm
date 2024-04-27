@@ -145,8 +145,8 @@ void bluetooth_thread()
                                     if (currentState == MANUAL) rover_commanded = ROVER_MOTOR1_REVERSE << 8 | ROVER_MOTOR2_REVERSE;
                                     if (currentState == ARM) 
                                     { 
-                                        move_arm = 0;
-                                        arm_commanded = ARM_MOTOR2_STOPPED;
+                                        move_arm = 1;
+                                        arm_commanded = ARM_MOTOR2_REVERSE;
                                     }
                                 } else {
                                     if (currentState == MANUAL) rover_commanded = ROVER_STOPPED;
@@ -310,22 +310,39 @@ void check_move_arm() {
             if (arm_commanded == ARM_MOTOR1_FORWARD || arm_commanded == ARM_MOTOR2_FORWARD || arm_commanded == ARM_MOTOR3_FORWARD) 
             {
             //printf("Condition 1\n");
-                change = 0.0000015;
+                change = 0.03;
             }
             if (arm_commanded == ARM_MOTOR1_REVERSE || arm_commanded == ARM_MOTOR2_REVERSE || arm_commanded == ARM_MOTOR3_REVERSE) 
             {
             //printf("Condition 2\n");
-                change = -0.0000015;
+                change = -0.03;
             }
 
+            printf("Entered For loop to move base.\n");
             for (float i = base.read(); i >= 0.0f && i <= 1.0f; i += change) {
-                if (arm_commanded == ARM_MOTOR1_FORWARD || arm_commanded == ARM_MOTOR1_REVERSE) base.write(i);
-                if (arm_commanded == ARM_MOTOR2_FORWARD || arm_commanded == ARM_MOTOR2_REVERSE) {arm_s1.write(i); arm_s2.write(i*1.5f);}
+                if (arm_commanded == ARM_MOTOR1_FORWARD || arm_commanded == ARM_MOTOR1_REVERSE) {
+                    base.write(i);
+                    printf("Base moved.");
+                }
                 if (arm_commanded == ARM_MOTOR3_FORWARD || arm_commanded == ARM_MOTOR3_REVERSE) claw.write(i);
                 if (!move_arm) {
                     break;
                 }
             }
+            printf("Entered For loop to move arm.\n");
+            for (float i = arm_s2.read(); i >= 0.2f && i <= 0.8f; i += change) {
+            if (arm_commanded == ARM_MOTOR2_FORWARD || arm_commanded == ARM_MOTOR2_REVERSE) {
+                printf("Right arm servo moved.\n");
+                arm_s1.write(i); 
+                // Thread::wait(75*(10^(-3)));
+                // 1.5f
+                arm_s2.write(i);
+                printf("Left arm servo moved.\n");
+                }
+            if (!move_arm) {
+                break;
+            }
+        }
         }
         else
         {
