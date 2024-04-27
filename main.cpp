@@ -43,7 +43,7 @@ void LeftRightMotor()
         serial_lock.unlock();
 */
 //Testing Code
-
+/*
         if (left_speed == 0.5)
         {
             led1 = 1;
@@ -73,9 +73,9 @@ void LeftRightMotor()
             led3 = 0;
             led4 = 1;
         }
-
-        right_motor.speed(right_speed);
-        left_motor.speed(left_speed);
+*/
+        right_motor.speed(left_speed);
+        left_motor.speed(right_speed);
 
         //Thread::wait(1500);
     }
@@ -87,7 +87,7 @@ void bluetooth_thread()
     bhit=0;
     while(1) {
         if (blue.readable()) {
-            pc.printf("Blue run\n");
+            //pc.printf("Blue run\n");
             if (bluetooth_connect == FALSE) bluetooth_connect = TRUE; //We connected for the first time.
             //led4 = !led4;
             if (blue.getc()=='!') {
@@ -268,26 +268,28 @@ void check_move_arm() {
                 change = -0.03;
             }
 
-            printf("Entered For loop to move base.\n");
+            //printf("Entered For loop to move base.\n");
             for (float i = base.read(); i >= 0.0f && i <= 1.0f; i += change) {
                 if (arm_commanded == ARM_MOTOR1_FORWARD || arm_commanded == ARM_MOTOR1_REVERSE) {
                     base.write(i);
-                    printf("Base moved.");
+                    // printf("Base moved.");
+                    wait(0.03);
                 }
                 if (arm_commanded == ARM_MOTOR3_FORWARD || arm_commanded == ARM_MOTOR3_REVERSE) claw.write(i);
                 if (!move_arm) {
                     break;
                 }
             }
-            printf("Entered For loop to move arm.\n");
+            //printf("Entered For loop to move arm.\n");
             for (float i = left_arm.read(); i >= 0.2f && i <= 0.8f; i += change) {
             if (arm_commanded == ARM_MOTOR2_FORWARD || arm_commanded == ARM_MOTOR2_REVERSE) {
-                printf("Right arm servo moved.\n");
+                // printf("Right arm servo moved.\n");
                 right_arm.write(i); 
                 // Thread::wait(75*(10^(-3)));
                 // 1.5f
                 left_arm.write(i);
-                printf("Left arm servo moved.\n");
+                // printf("Left arm servo moved.\n");
+                wait(0.03);
                 }
             if (!move_arm) {
                 break;
@@ -308,7 +310,7 @@ void check_move_arm() {
 int old_distance = 0;
 
 void alert(int distance) {
-    if (distance < 500) object_detected = TRUE;
+    if (distance < 300) object_detected = TRUE;
     else object_detected = FALSE;
 /*
     if (distance != old_distance) {
@@ -389,7 +391,7 @@ int main() {
                     break;
             }
             Thread::wait(50);
-            /*
+            
             if (currentState == STANDBY) { 
                 led1 = 1;
                 led2 = 0;
@@ -414,6 +416,6 @@ int main() {
                 led3 = 0;
                 led4 = 1;
             }
-            */
+            
     }
 }
