@@ -1,5 +1,6 @@
 #include "Thread.h"
 #include "def.h"
+#include "ultrasonic.h"
 
 
 float util_speedConversion(int commanded)
@@ -317,26 +318,28 @@ void check_move_arm() {
                 change = -0.03;
             }
 
-            printf("Entered For loop to move base.\n");
+            // printf("Entered For loop to move base.\n");
             for (float i = base.read(); i >= 0.0f && i <= 1.0f; i += change) {
                 if (arm_commanded == ARM_MOTOR1_FORWARD || arm_commanded == ARM_MOTOR1_REVERSE) {
                     base.write(i);
-                    printf("Base moved.");
+                    // printf("Base moved.");
+                    wait(0.03);
                 }
                 if (arm_commanded == ARM_MOTOR3_FORWARD || arm_commanded == ARM_MOTOR3_REVERSE) claw.write(i);
                 if (!move_arm) {
                     break;
                 }
             }
-            printf("Entered For loop to move arm.\n");
+            // printf("Entered For loop to move arm.\n");
             for (float i = arm_s2.read(); i >= 0.2f && i <= 0.8f; i += change) {
             if (arm_commanded == ARM_MOTOR2_FORWARD || arm_commanded == ARM_MOTOR2_REVERSE) {
-                printf("Right arm servo moved.\n");
+                // printf("Right arm servo moved.\n");
                 arm_s1.write(i); 
                 // Thread::wait(75*(10^(-3)));
                 // 1.5f
                 arm_s2.write(i);
-                printf("Left arm servo moved.\n");
+                wait(0.03);
+                // printf("Left arm servo moved.\n");
                 }
             if (!move_arm) {
                 break;
@@ -354,16 +357,42 @@ void check_move_arm() {
     }
 }
 
+int old_distance = 0;
+
+void alert(int distance) {
+
+    if (distance != old_distance) {
+        serial_lock.lock();
+        pc.printf("Distance: %d\n", distance);
+        serial_lock.unlock();
+        old_distance = distance;
+    }
+}
+
+void ultrasonic_loop() {
+
+    mu_right.startUpdates();//start measuring the distance
+    mu_left.startUpdates();//start measuring the distance
+
+    while(1)
+    {
+        mu_left.checkDistance();
+        mu_right.checkDistance();
+    }
+
+}
+
 
 int main() {
     blueTooth_init();
     serial_init();
 
-    t1.start(serial_tx);
+    //t1.start(serial_tx);
     t2.start(LeftRightMotor);
     t3.start(check_move_arm);
     t4.start(bluetooth_thread);
     t5.start(IR_thread);
+    t6.start(ultrasonic_loop);
 
     State prev_state = STANDBY;
 
