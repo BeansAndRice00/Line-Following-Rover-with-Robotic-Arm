@@ -1,9 +1,10 @@
 #include "Mutex.h"
 #include "mbed.h"
 #include "rtos.h"
-#include "uLCD_4DGL.h"     //Updated LCD Library
+//#include "uLCD_4DGL.h"     //Updated LCD Library
 #include "Motor.h"
 #include "Servo.h"
+#include "ultrasonic.h"
 
 #ifndef DEF_H
 #define DEF_H
@@ -48,7 +49,7 @@ void serial_tx();
 void serial_init();
 
 Mutex serial_lock; 
-
+Mutex motor_lock; 
 
 
 //Set of Commands to be used by Rover during Manual and Line-Following
@@ -110,6 +111,7 @@ Thread t2;
 Thread t3;
 Thread t4;
 Thread t5;
+Thread t6;
 
 AnalogOut DACout(p18);
 
@@ -159,6 +161,10 @@ AnalogIn center(p16); // initialize a center sensor object on p16
 AnalogIn right(p17);  // initialize a right sensor object on p17
 #define LINETHRESHOLD 0.8
 
-
+//Ultrasonic Sensor
+void alert(int distance);
+ultrasonic mu_left(p6, p7, .1, 1, &alert);
+ultrasonic mu_right(p12, p13, .1, 1, &alert);
+//ultrasonic mu_center(p6, p7, .1, 1, &alert);
 
 #endif 
