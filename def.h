@@ -178,8 +178,8 @@ AnalogIn ir_right(RIGHT_IR);  // initialize a right sensor object on p17
 
 //Ultrasonic Sensor
 void alert(int distance);
-ultrasonic left_ult_sonic(LEFT_ULT_SONIC_MISO, LEFT_ULT_SONIC_SCK, .1, 1, &alert);
-ultrasonic right_ult_sonic(RIGHT_ULT_SONIC_MISO, RIGHT_ULT_SONIC_SCK, .1, 1, &alert);
+ultrasonic left_ult_sonic(LEFT_ULT_SONIC_MISO, LEFT_ULT_SONIC_SCK, .01, 1, &alert);
+ultrasonic right_ult_sonic(RIGHT_ULT_SONIC_MISO, RIGHT_ULT_SONIC_SCK, .01, 1, &alert);
 //ultrasonic mu_center(p6, p7, .1, 1, &alert);
 
 #endif 

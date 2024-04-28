@@ -7,16 +7,16 @@ float util_speedConversion(int commanded)
 {
     switch ((enum RoverCommand) commanded) {
         case ROVER_MOTOR1_FORWARD:
-            return 0.5;
+            return 0.75;
             break;
         case ROVER_MOTOR1_REVERSE:
-            return -0.5;
+            return -0.75;
             break;
         case ROVER_MOTOR2_FORWARD:
-            return 0.5;
+            return 0.75;
             break;
         case ROVER_MOTOR2_REVERSE:
-            return -0.5;
+            return -0.75;
             break;
         case ROVER_STOPPED:
             return 0.0;
@@ -219,34 +219,47 @@ void IR_thread() {
         //printf("%.2f\t", center.read()); // tab character
         //printf("%.2f\n", right.read());
 		while(1) {
-            motor_lock.lock();
+            
 			if (currentState == PATH_FIND) {
 				// if on the line drive left and right at the same speed (left is CCW / right is CW)
 				if (ir_center.read() > LINETHRESHOLD)
 				{   
-					led1 = 1;
+					//led1 = 1;
 					if (currentState == PATH_FIND) rover_commanded = ROVER_MOTOR1_FORWARD << 8 | ROVER_MOTOR2_FORWARD;
+                    Thread::wait(10);
 				}
 
 				// if the line is under the right sensor, adjust relative speeds to turn to the right
 				else if (ir_right.read() > LINETHRESHOLD)
 				{
-					led2 = 1;
-					if (currentState == PATH_FIND) rover_commanded = ROVER_MOTOR1_FORWARD << 8 | ROVER_MOTOR2_REVERSE;
+					//led2 = 1;
+                    while (currentState == PATH_FIND && ir_left.read() <= LINETHRESHOLD && ir_right.read() > LINETHRESHOLD) 
+                    {
+                        rover_commanded = ROVER_MOTOR1_FORWARD << 8 | ROVER_MOTOR2_REVERSE;
+                        Thread::wait(10);
+                    }
+
 				}
 
 				// if the line is under the left sensor, adjust relative speeds to turn to the left
 				else if (ir_left.read() > LINETHRESHOLD)
 				{
-					led4 = 1;
-					if (currentState == PATH_FIND) rover_commanded = ROVER_MOTOR1_REVERSE << 8 | ROVER_MOTOR2_FORWARD;
+					//led4 = 1;
+					while (currentState == PATH_FIND && ir_right.read() <= LINETHRESHOLD && ir_left.read() > LINETHRESHOLD) 
+                    {
+                    rover_commanded = ROVER_MOTOR1_REVERSE << 8 | ROVER_MOTOR2_FORWARD;
+                                    Thread::wait(10);
+
+                    }
 				} else {
 					if (currentState == PATH_FIND) rover_commanded = ROVER_STOPPED;
 				}
+                //Thread::yield();
+                Thread::wait(150);
 			} 
-            motor_lock.unlock();
+            
 
-            Thread::wait(75);
+
 		}
 
 }
@@ -309,9 +322,26 @@ void check_move_arm() {
 
 int old_distance = 0;
 
+int history[5] = {11000, 11000, 11000, 11000, 11000};
+
 void alert(int distance) {
-    if (distance < 300) object_detected = TRUE;
+    float sum = 0.0f;
+
+    for (int i = 0; i < 4; i++)
+        history[i] = history[i+1];
+    if (distance > 10000) distance = 1000;
+    history[4] = distance;
+    
+    for (int i = 0; i < 5; i++)
+        sum += history[i];
+
+    sum = sum / 5.0f;
+
+
+    if (sum < 200) object_detected = TRUE;
     else object_detected = FALSE;
+
+    //pc.printf("%f\n", sum);
 /*
     if (distance != old_distance) {
         serial_lock.lock();
@@ -332,6 +362,7 @@ void ultrasonic_loop() {
     {
         left_ult_sonic.checkDistance();
         right_ult_sonic.checkDistance();
+        //Thread::wait(125);
     }
 
 }
@@ -378,7 +409,6 @@ int main() {
                     if (manual_commanded == TRUE)       
                     {
                         currentState    = MANUAL;
-                        prev_state      = PATH_FIND;
                     }
                     if (object_detected == TRUE)        currentState = ARM;
                     break;
@@ -390,7 +420,7 @@ int main() {
                     if (object_detected == TRUE)        currentState = ARM;
                     break;
             }
-            Thread::wait(50);
+            //Thread::wait(50);
             
             if (currentState == STANDBY) { 
                 led1 = 1;
