@@ -1,6 +1,8 @@
-# mbed Rover with Robotic Arm and Line Following
-
+# Line Following Rover with Robotic Arm
+ECE 4180 Spring 2024 Final Project, Georgia Institute of Technology
+Project Members: Devansh Singh, Nicholas Graham, Tejasvi V Yadavalli
 This project implements a versatile rover equipped with a robotic arm, capable of line following. It utilizes the ARM mbed platform for development.
+
 
 ![Rover with Robotic Arm](rover_with_arm.jpg)
 
