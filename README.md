@@ -6,6 +6,10 @@
 
 ![Rover with Robotic Arm](rover_with_arm.jpg)
 
+# Project Idea:
+-A line-following rover with a servo-controlled robotic arm. The rover can move forwards, backwards, left, and right in the manual state. The rover also has an autonomous line following state where it follows a dark line with IR sensors. The servo-controlled arm can move up, down, left, and right in the arm state. The purpose of the arm is to move objects that are in the way of the rover. The purpose of the project was to create a smaller scale version of an excavator with an autonomous line following function to simulate a method of moving a large excavator without human control. This line following function could be beneficial in storing large numbers of excavators at a time in warehouses.
+
+
 ## Features
 
 - **Rover Movement**: The rover can move forward, backward, turn left, and turn right.
