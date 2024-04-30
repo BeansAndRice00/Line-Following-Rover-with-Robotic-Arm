@@ -12,12 +12,6 @@
 #define TRUE    1
 #define FALSE   0
 
-#define ARM_TX  p9
-#define ARM_RX  p10
-
-#define ROVER_TX  p13
-#define ROVER_RX  p14
-
 void RightMotor(); 
 void LeftMotor();
 
@@ -97,8 +91,33 @@ enum BT_CONTROLLER {
 
 volatile State currentState = STANDBY;
 
-#define BLUE_TX p28
-#define BLUE_RX p27
+#define LEFT_ULT_SONIC_MISO p6
+#define LEFT_ULT_SONIC_SCK  p7
+
+#define BLUE_TX p9
+#define BLUE_RX p10
+
+#define RIGHT_ULT_SONIC_MISO p12
+#define RIGHT_ULT_SONIC_SCK  p13
+
+#define LEFT_IR     p15
+#define CENTER_IR   p16
+#define RIGHT_IR    p17
+
+#define LEFT_MOTOR_FWD      p30  
+#define LEFT_MOTOR_REV      p29  
+#define RIGHT_MOTOR_FWD     p28  
+#define RIGHT_MOTOR_REV     p27
+
+#define LEFT_MOTOR_PWM      p26
+#define RIGHT_MOTOR_PWM     p25
+
+#define RIGHT_ARM           p24  //s1
+#define LEFT_ARM            p23  //s2
+
+#define CLAW                p22
+#define BASE                p21
+
 
 DigitalOut led1(LED1);
 DigitalOut led2(LED2);
@@ -113,11 +132,7 @@ Thread t4;
 Thread t5;
 Thread t6;
 
-AnalogOut DACout(p18);
-
 RawSerial pc(USBTX, USBRX);             // Initialize a serial port for USB communication
-RawSerial arm(ARM_TX, ARM_RX);          // Initialize a serial port for ARM communication
-RawSerial rover(ROVER_TX, ROVER_RX);    // Initialize a serial port for ROVER communication
 RawSerial blue(BLUE_TX, BLUE_RX);       // Initialize a serial port for Bluetooth communication
 
 volatile char serialBuffer;
@@ -125,8 +140,8 @@ volatile char serialBuffer_old;
 
 
 //Motor
-Motor m_l(p23, p6, p5);     // pwm, fwd, rev
-Motor m_r(p24, p12, p11);   // pwm, fwd, rev
+Motor left_motor(LEFT_MOTOR_PWM, LEFT_MOTOR_FWD, LEFT_MOTOR_REV);     // pwm, fwd, rev
+Motor right_motor(RIGHT_MOTOR_PWM, RIGHT_MOTOR_FWD, RIGHT_MOTOR_REV);   // pwm, fwd, rev
 //AnalogIn pot(p20);
 volatile int            rover_commanded    = ROVER_RESERVED;
 volatile ArmCommand     arm_commanded      = ARM_RESERVED;
@@ -146,25 +161,25 @@ volatile bool object_detected       = FALSE;
 
 
 //ARM
-Servo base(p21);    //Base Servo
-Servo arm_s1(p25);  //Arm Servo
-Servo arm_s2(p26);  
-Servo claw(p22);    //Claw Servo
+Servo base(BASE);    //Base Servo
+Servo right_arm(RIGHT_ARM);  //Arm Servo
+Servo left_arm(LEFT_ARM);  
+Servo claw(CLAW);    //Claw Servo
 
 volatile bool move_arm;
 volatile char bhit;
 
 
 //Linesensor
-AnalogIn left(p15);   // initialize a left sensor object on p15
-AnalogIn center(p16); // initialize a center sensor object on p16
-AnalogIn right(p17);  // initialize a right sensor object on p17
+AnalogIn ir_left(LEFT_IR);   // initialize a left sensor object on p15
+AnalogIn ir_center(CENTER_IR); // initialize a center sensor object on p16
+AnalogIn ir_right(RIGHT_IR);  // initialize a right sensor object on p17
 #define LINETHRESHOLD 0.8
 
 //Ultrasonic Sensor
 void alert(int distance);
-ultrasonic mu_left(p6, p7, .1, 1, &alert);
-ultrasonic mu_right(p12, p13, .1, 1, &alert);
+ultrasonic left_ult_sonic(LEFT_ULT_SONIC_MISO, LEFT_ULT_SONIC_SCK, .01, 1, &alert);
+ultrasonic right_ult_sonic(RIGHT_ULT_SONIC_MISO, RIGHT_ULT_SONIC_SCK, .01, 1, &alert);
 //ultrasonic mu_center(p6, p7, .1, 1, &alert);
 
 #endif 

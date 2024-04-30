@@ -7,16 +7,16 @@ float util_speedConversion(int commanded)
 {
     switch ((enum RoverCommand) commanded) {
         case ROVER_MOTOR1_FORWARD:
-            return 0.5;
+            return 0.75;
             break;
         case ROVER_MOTOR1_REVERSE:
-            return -0.5;
+            return -0.75;
             break;
         case ROVER_MOTOR2_FORWARD:
-            return 0.5;
+            return 0.75;
             break;
         case ROVER_MOTOR2_REVERSE:
-            return -0.5;
+            return -0.75;
             break;
         case ROVER_STOPPED:
             return 0.0;
@@ -74,8 +74,8 @@ void LeftRightMotor()
             led4 = 1;
         }
 */
-        m_r.speed(left_speed);
-        m_l.speed(right_speed);
+        right_motor.speed(left_speed);
+        left_motor.speed(right_speed);
 
         //Thread::wait(1500);
     }
@@ -87,6 +87,7 @@ void bluetooth_thread()
     bhit=0;
     while(1) {
         if (blue.readable()) {
+            //pc.printf("Blue run\n");
             if (bluetooth_connect == FALSE) bluetooth_connect = TRUE; //We connected for the first time.
             //led4 = !led4;
             if (blue.getc()=='!') {
@@ -205,61 +206,10 @@ void blueTooth_init()
     blue.baud(9600); // Set the baud rate for the device serial port
 }
 
-void serial_rx()
-{
-    char temp = 0;
-    if(rover.readable()) {
-        //pc.printf("Rx-ing\n");
-        //led3 = ~led3;
-        wait(0.050);
-        temp = rover.getc();
-        /*
-        if (temp==ARM_MOTOR3_REVERSE) 
-        {
-            //led2 = 1;
-            //led3 = 0;
-        }
-        if (temp==ARM_MOTOR3_FORWARD) 
-        {
-            //led3 = 1;
-            //led2 = 0;
-        }
-        //pc.printf("%d\n", temp);
-
-        //wait(0.050);
-        */
-    }
-    //Thread::wait(50);
-}
-
-void serial_tx()
-{
-    serialBuffer = ARM_MOTOR3_REVERSE;
-    while(1)
-    {
-        char temp = 0;
-        if (rover.writeable()){ 
-            if (serialBuffer == ARM_MOTOR3_REVERSE) serialBuffer = ARM_MOTOR3_FORWARD;
-            else serialBuffer = ARM_MOTOR3_REVERSE;
-
-            rover.putc(serialBuffer);
-            serialBuffer_old = serialBuffer;
-        }
-        Thread::wait(1000);
-    }
-}
 
 void serial_init()
 {
-    arm.baud(9600);
-    arm.attach(&serial_rx, Serial::RxIrq);
-
-    rover.baud(9600);
-    rover.attach(&serial_rx, Serial::RxIrq);
-
-    serialBuffer        = ARM_RESERVED;
-    serialBuffer_old    = ARM_RESERVED;
-
+    
     pc.baud(9600);
     //pc.attach(&serial_rx, Serial::RxIrq);
 }
@@ -272,21 +222,21 @@ void IR_thread() {
             motor_lock.lock();
 			if (currentState == PATH_FIND) {
 				// if on the line drive left and right at the same speed (left is CCW / right is CW)
-				if (center.read() > LINETHRESHOLD)
+				if (ir_center.read() > LINETHRESHOLD)
 				{   
 					led1 = 1;
 					if (currentState == PATH_FIND) rover_commanded = ROVER_MOTOR1_FORWARD << 8 | ROVER_MOTOR2_FORWARD;
 				}
 
 				// if the line is under the right sensor, adjust relative speeds to turn to the right
-				else if (right.read() > LINETHRESHOLD)
+				else if (ir_right.read() > LINETHRESHOLD)
 				{
 					led2 = 1;
 					if (currentState == PATH_FIND) rover_commanded = ROVER_MOTOR1_FORWARD << 8 | ROVER_MOTOR2_REVERSE;
 				}
 
 				// if the line is under the left sensor, adjust relative speeds to turn to the left
-				else if (left.read() > LINETHRESHOLD)
+				else if (ir_left.read() > LINETHRESHOLD)
 				{
 					led4 = 1;
 					if (currentState == PATH_FIND) rover_commanded = ROVER_MOTOR1_REVERSE << 8 | ROVER_MOTOR2_FORWARD;
@@ -318,26 +268,28 @@ void check_move_arm() {
                 change = -0.03;
             }
 
-            printf("Entered For loop to move base.\n");
+            //printf("Entered For loop to move base.\n");
             for (float i = base.read(); i >= 0.0f && i <= 1.0f; i += change) {
                 if (arm_commanded == ARM_MOTOR1_FORWARD || arm_commanded == ARM_MOTOR1_REVERSE) {
                     base.write(i);
-                    printf("Base moved.");
+                    // printf("Base moved.");
+                    wait(0.03);
                 }
                 if (arm_commanded == ARM_MOTOR3_FORWARD || arm_commanded == ARM_MOTOR3_REVERSE) claw.write(i);
                 if (!move_arm) {
                     break;
                 }
             }
-            printf("Entered For loop to move arm.\n");
-            for (float i = arm_s2.read(); i >= 0.2f && i <= 0.8f; i += change) {
+            //printf("Entered For loop to move arm.\n");
+            for (float i = left_arm.read(); i >= 0.2f && i <= 0.8f; i += change) {
             if (arm_commanded == ARM_MOTOR2_FORWARD || arm_commanded == ARM_MOTOR2_REVERSE) {
-                printf("Right arm servo moved.\n");
-                arm_s1.write(i); 
+                // printf("Right arm servo moved.\n");
+                right_arm.write(i); 
                 // Thread::wait(75*(10^(-3)));
                 // 1.5f
-                arm_s2.write(i);
-                printf("Left arm servo moved.\n");
+                left_arm.write(i);
+                // printf("Left arm servo moved.\n");
+                wait(0.03);
                 }
             if (!move_arm) {
                 break;
@@ -358,24 +310,28 @@ void check_move_arm() {
 int old_distance = 0;
 
 void alert(int distance) {
-
+    if (distance < 300) object_detected = TRUE;
+    else object_detected = FALSE;
+/*
     if (distance != old_distance) {
         serial_lock.lock();
         pc.printf("Distance: %d\n", distance);
         serial_lock.unlock();
+
         old_distance = distance;
     }
+*/
 }
 
 void ultrasonic_loop() {
 
-    mu_right.startUpdates();//start measuring the distance
-    mu_left.startUpdates();//start measuring the distance
+    right_ult_sonic.startUpdates();//start measuring the distance
+    left_ult_sonic.startUpdates();//start measuring the distance
 
     while(1)
     {
-        mu_left.checkDistance();
-        mu_right.checkDistance();
+        left_ult_sonic.checkDistance();
+        right_ult_sonic.checkDistance();
     }
 
 }
@@ -390,11 +346,13 @@ int main() {
     t3.start(check_move_arm);
     t4.start(bluetooth_thread);
     t5.start(IR_thread);
-    t6.start(ultrasonic_loop);
+    //t6.start(ultrasonic_loop);
 
     State prev_state = STANDBY;
 
+    
     while (true) {
+            //pc.printf("In loop\n");
             // State machine logic
             switch (currentState) {
                 case STANDBY:
@@ -422,17 +380,18 @@ int main() {
                         currentState    = MANUAL;
                         prev_state      = PATH_FIND;
                     }
-                    if (object_detected == TRUE)        currentState = ARM;
+                    //if (object_detected == TRUE)        currentState = ARM;
                     break;
                 case ARM:
                     //If user wants manual control, then manual. If an object is detected, then switch to Arm
                     while (rover_commanded != ROVER_STOPPED) rover_commanded = ROVER_STOPPED;
                     if (manual_commanded == TRUE)       currentState = MANUAL;
                     if (autonomous_commanded == TRUE)   currentState = PATH_FIND;
-                    if (object_detected == TRUE)        currentState = ARM;
+                    //if (object_detected == TRUE)        currentState = ARM;
                     break;
             }
             Thread::wait(50);
+            
             if (currentState == STANDBY) { 
                 led1 = 1;
                 led2 = 0;
@@ -457,5 +416,6 @@ int main() {
                 led3 = 0;
                 led4 = 1;
             }
+            
     }
 }
