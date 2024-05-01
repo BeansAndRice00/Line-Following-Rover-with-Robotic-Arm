@@ -1,7 +1,7 @@
 # Line Following Rover with Robotic Arm
 ECE 4180 Spring 2024 Final Project, Georgia Institute of Technology
 
-Project Members: Devansh Singh, Nicholas Graham, Tejasvi V Yadavalli
+Project Members: Devansh Singh, Nicholas Graham, Tejasvi V Yadavalli, Henry Taboh
 
 This project implements a versatile rover equipped with a robotic arm, capable of line following. It utilizes the ARM mbed platform for development.
 
