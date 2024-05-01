@@ -32,7 +32,7 @@ A line-following rover with a servo-controlled robotic arm. The rover can move f
 
 ## Schematic
 
-![Fritzing Schematic of Hardware](4180 Diagram_bb.png)
+![Fritzing Schematic of Hardware](4180_Diagram_bb.png)
 
 
 ## Software Components
