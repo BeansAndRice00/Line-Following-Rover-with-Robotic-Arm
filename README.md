@@ -71,6 +71,12 @@ To assemble the Arm use the following pages:
 - [Smart Robot Arm Kit Manual](https://www.dropbox.com/sh/8c8xaqfsh8jiyel/AACQizMHrRqQSzIDUiasagWTa/LAFVIN%20Smart%20Robot%20Arm%20Kit?dl=0&preview=Smart+Robot+Arm+Kit.pdf&subfolder_nav_tracking=1)
   - Consider only Slide 46 to Slide 84
 
+The completed Rover should look like:
+![Rover Chassis](rover_chassis.JPG)
+
+The completed Rover Arm should look like:
+![Rover Arm](rover_arm.JPG)
+
 ## How to Operate
 1. Power the mbed using the external battery.
 2. Use the 'Bluefruit Connect' app to connect to the Rover's Bluetooth module.
@@ -134,6 +140,9 @@ To assemble the circuit for the rover, refer to the following table and above sc
 |         | p13  | Echo   |
 | 5V      |      | Vcc    |
 |         | gnd  | gnd    |
+
+The completed circuit should look like:
+![Rover Circuit](rover_circuit.JPG)
 
 
 ## License
