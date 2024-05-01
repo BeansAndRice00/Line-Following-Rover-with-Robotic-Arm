@@ -83,6 +83,58 @@ To assemble the Arm use the following pages:
 6. Press '2' to make the Rover autonomously Line-Follow along a black line. It will stop moving when it does not detect a black line.
 7. Press '3' to control the arm via Bluetooth commands using the arrow keys.
 
+### Circuit Assembly
+To assemble the circuit for the rover, refer to the following table and above schematic:
+
+| Battery (5v) | mbed | Adafruit BLE |
+|--------------|------|--------------|
+|              | GND  | GND          |
+|              | nc   | RTS          |
+|              | GND  | CTS          |
+|              | p9   | TXO          |
+|              | p10  | RXI          |
+| 5V           |      | Vin (3.3-16V)|
+
+| Battery | mbed | H-Bridge | Left Motor  | Right Motor |
+|---------|------|----------|-------------|-------------|
+|         | Vout | VCC      |             |             |
+| 5V      |      | VM       |             |             |
+|         | p26  | PWMA     |             |             |
+|         | p39  | AI2      |             |             |
+|         | p30  | AI1      |             |             |
+|         | GND  | STBY     |             |             |
+|         | GND  | GND      |             |             |
+|         |      | AO1      | Power Lead  |             |
+|         |      | AO2      | Ground Lead |             |
+|         | p25  | PWMB     |             |             |
+|         | p27  | BI2      |             |             |
+|         | p28  | BI1      |             |             |
+|         |      | BO1      |             | Power Lead  |
+|         |      | BO2      |             | Ground Lead |
+
+| Battery | mbed | IR Sensor |
+|---------|------|-----------|
+|         | p15  | IR Left   |
+|         | p17  | IR Right  |
+|         | p16  | IR Center |
+| 5V      |      | vcc       |
+|         | gnd  | gnd       |
+
+| Battery | mbed | Servo          |
+|---------|------|----------------|
+|         | p21  | Base Servo     |
+|         | p23  | Left Arm Servo |
+|         | p24  | Right Arm Servo|
+| 5V      |      | VCC            |
+|         | GND  | gnd            |
+
+| Battery | mbed | HCSR04 |
+|---------|------|--------|
+|         | p12  | Trig   |
+|         | p13  | Echo   |
+| 5V      |      | Vcc    |
+|         | gnd  | gnd    |
+
 
 ## License
 
