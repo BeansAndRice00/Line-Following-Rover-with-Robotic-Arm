@@ -30,6 +30,11 @@ A line-following rover with a servo-controlled robotic arm. The rover can move f
 - **Batteries**: to power the motor driver and the mbed
 - **Bluetooth LE UART Module**: for remote control
 
+## Schematic
+
+![Fritzing Schematic of Hardware](4180 Diagram_bb.png)
+
+
 ## Software Components
 
 - **mbed RTOS**: Provides the operating system and hardware abstraction layer for threading and interrupts.
